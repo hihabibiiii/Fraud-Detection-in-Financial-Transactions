@@ -1,6 +1,8 @@
 # 💳 Fraud Detection in Financial Transactions
 
 An end-to-end Machine Learning project that detects fraudulent financial transactions using advanced data science techniques and a Streamlit web application for real-time prediction.
+
+
 🚀 Live Demo
 https://fraud-detection-in-financial-transactions-h7bjnyynupvacqehnul5.streamlit.app/
 ---
