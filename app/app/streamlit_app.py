@@ -1,10 +1,29 @@
 import streamlit as st
 import numpy as np
 import joblib
+import gdown
+import os
 
-# Load model and threshold
-model = joblib.load("../../models/fraud_model_final.pkl")
-threshold = joblib.load("../../models/threshold.pkl")
+# Download models from Drive
+
+def download_model(file_id, output):
+    if not os.path.exists(output):
+        url = f"https://drive.google.com/uc?id={file_id}"
+        gdown.download(url, output, quiet=False)
+
+# 🔥 ONLY FILE IDs (not full link)
+MODEL_ID = "1CYKehzLmt1kTafFH-iuj4Cx6KXmiR_0z"
+THRESHOLD_ID = "1imrY_wLtTjnkeOpIMkMg5Ef5uC7ba-le"
+
+download_model(MODEL_ID, "fraud_model_final.pkl")
+download_model(THRESHOLD_ID, "threshold.pkl")
+
+# Load model
+
+model = joblib.load("fraud_model_final.pkl")
+threshold = joblib.load("threshold.pkl")
+
+# Streamlit UI
 
 st.set_page_config(page_title="Fraud Detection System", layout="centered")
 
@@ -13,9 +32,9 @@ st.write("Enter transaction details to check if it is Fraud or Genuine")
 
 st.sidebar.header("Transaction Input")
 
-# Since dataset has V1–V28 + Amount
 features = []
 
+# V1–V28
 for i in range(1, 29):
     val = st.sidebar.number_input(f"V{i}", value=0.0, format="%.5f")
     features.append(val)
@@ -25,8 +44,11 @@ features.append(amount)
 
 features = np.array(features).reshape(1, -1)
 
-# Predict
+# Prediction
+
+
 if st.button("Check Transaction"):
+
     prob = model.predict_proba(features)[0][1]
 
     st.write(f"### Fraud Probability: {prob:.4f}")
