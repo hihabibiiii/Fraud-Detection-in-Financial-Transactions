@@ -45,19 +45,36 @@ tab1, tab2 = st.tabs(["🔍 Single Transaction", "📂 Batch Prediction (CSV)"])
 
 with tab1:
 
-    st.subheader("Test a Sample Transaction")
+    st.subheader("Manual Transaction Input")
 
-    if st.button("Generate & Test Random Transaction"):
+    with st.form("manual_prediction_form"):
 
-        sample = np.random.randn(1, 29)
-        prob = model.predict_proba(sample)[0][1]
+        features = []
 
-        st.metric("Fraud Probability", f"{prob:.4f}")
+        col1, col2, col3 = st.columns(3)
 
-        if prob >= threshold:
-            st.error("🚨 Fraudulent Transaction Detected!")
-        else:
-            st.success("✅ Genuine Transaction")
+        for i in range(1, 29):
+            with col1 if i % 3 == 1 else col2 if i % 3 == 2 else col3:
+                val = st.number_input(f"V{i}", value=0.0, format="%.5f")
+                features.append(val)
+
+        amount = st.number_input("Amount", value=0.0, format="%.2f")
+        features.append(amount)
+
+        submit = st.form_submit_button("🔍 Predict Fraud")
+
+        if submit:
+
+            input_data = np.array(features).reshape(1, -1)
+
+            prob = model.predict_proba(input_data)[0][1]
+
+            st.metric("Fraud Probability", f"{prob:.4f}")
+
+            if prob >= threshold:
+                st.error("🚨 Fraudulent Transaction Detected!")
+            else:
+                st.success("✅ Genuine Transaction")
 
 
 # TAB 2 – CSV Upload (Professional Mode)
