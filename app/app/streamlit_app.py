@@ -65,6 +65,8 @@ with tab1:
 with tab2:
 
     st.subheader("Upload Transaction Dataset (CSV)")
+    st.info("CSV should contain at least V1–V28 and Amount columns. Extra columns will be ignored.")
+
     uploaded_file = st.file_uploader("Upload CSV File", type=["csv"])
 
     if uploaded_file is not None:
@@ -74,21 +76,48 @@ with tab2:
         st.write("### Preview of Uploaded Data")
         st.dataframe(df.head())
 
+        # ---------------------------------------
+        # Required Columns
+        # ---------------------------------------
+        required_columns = [f"V{i}" for i in range(1, 29)] + ["Amount"]
+
+        # Check Missing Columns
+        missing_cols = [col for col in required_columns if col not in df.columns]
+
+        if missing_cols:
+            st.error(f"❌ Missing required columns: {missing_cols}")
+            st.stop()
+
+        # ---------------------------------------
+        # Keep Only Required Columns
+        # ---------------------------------------
+        df_model = df[required_columns]
+
+        # Ensure numeric
+        df_model = df_model.apply(pd.to_numeric, errors='coerce')
+
+        # Drop rows with NaN
+        df_model = df_model.dropna()
+
+        if df_model.empty:
+            st.error("❌ No valid numeric data found after cleaning.")
+            st.stop()
+
         if st.button("Run Fraud Detection"):
 
-            probs = model.predict_proba(df)[:, 1]
+            probs = model.predict_proba(df_model)[:, 1]
 
-            df["Fraud_Probability"] = probs
-            df["Prediction"] = (probs >= threshold).astype(int)
+            df.loc[df_model.index, "Fraud_Probability"] = probs
+            df.loc[df_model.index, "Prediction"] = (probs >= threshold).astype(int)
 
-            fraud_count = df["Prediction"].sum()
-            total = len(df)
+            fraud_count = int(df["Prediction"].sum())
+            total = len(df_model)
             fraud_percent = (fraud_count / total) * 100
 
             st.success("✅ Prediction Completed")
 
             col1, col2 = st.columns(2)
-            col1.metric("Total Transactions", total)
+            col1.metric("Valid Transactions", total)
             col2.metric("Fraud Detected", f"{fraud_count} ({fraud_percent:.2f}%)")
 
             st.markdown("### Results Preview")
@@ -100,7 +129,6 @@ with tab2:
                 file_name="fraud_detection_results.csv",
                 mime="text/csv"
             )
-
 # Footer
 
 st.markdown("---")
